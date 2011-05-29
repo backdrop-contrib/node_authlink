@@ -1,5 +1,0 @@
-name = Node access link
-description = Generates link for view, edit, or delete node without login.
-dependencies[] = computed_field
-core = 7.x
-files[] = node_access_link.module
