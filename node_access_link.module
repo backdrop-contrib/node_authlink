@@ -34,14 +34,14 @@ function node_access_link_form_node_type_form_alter(&$form, &$form_state) {
   
   $form['node_access_link']['node_access_link_grants'] = array(
     '#type' => 'checkboxes', 
-    '#title' => t('Grants'), 
+    '#title' => t('Grants to give'), 
     '#default_value' => $default_grants,
     '#options' => array(
       'view' => t('View'),
       'update' => t('Update'), 
       'delete' => t('Delete'), 
     ),
-    '#description' => t('What operations will be temporarily given to authorised user for the node.'),
+    '#description' => t('What operations will be temporarily given to authorised user for the node. This not affect users who is authorised yet.'),
   );
   
   $form['#submit'][] = 'node_access_link_form_node_type_form_alter_submit';
@@ -53,11 +53,19 @@ function node_access_link_form_node_type_form_alter(&$form, &$form_state) {
 function node_access_link_form_node_type_form_alter_submit(&$form, &$form_state) {
   $instance = field_info_instance('node', 'field_node_access_link_authkey', $form_state['values']['type']);
   
-  if(!$instance && $form_state['values']['node_access_link_enable']) { // Instance does not exist and checkbox is enabled
-    node_access_link_create_field_instance($form_state['values']['type']);
+  // Instance does not exist and checkbox is enabled - create filed and instance
+  if(!$instance && $form_state['values']['node_access_link_enable']) {
+    node_access_link_create_field_instance($form_state['values']['type'], $form_state['values']['node_access_link_grants']);
   }
   
-  elseif($instance && !$form_state['values']['node_access_link_enable']) { // Instance exists and checkbox is disabled
+  // Instance exists and checkbox is enabled - update instance
+  elseif($instance && $form_state['values']['node_access_link_enable']) {
+    $instance['node_access_link_grants'] = $form_state['values']['node_access_link_grants'];
+    field_update_instance($instance);
+  }
+  
+  // Instance exists and checkbox is disabled - delete filed and instance
+  elseif($instance && !$form_state['values']['node_access_link_enable']) {
     field_delete_instance($instance);
   }
   
@@ -67,7 +75,7 @@ function node_access_link_form_node_type_form_alter_submit(&$form, &$form_state)
 /**
  * Create field instance in specified node type.
  */
-function node_access_link_create_field_instance($node_type) {
+function node_access_link_create_field_instance($node_type, $grants) {
   if(!field_info_field('field_node_access_link_authkey')) {
     $field = array(
       'translatable' => '1',
@@ -124,6 +132,7 @@ function node_access_link_create_field_instance($node_type) {
     'field_name' => 'field_node_access_link_authkey',
     'entity_type' => 'node',
     'bundle' => $node_type,
+    'node_access_link_grants' => $grants,
   );
   field_create_instance($instance);
 }
@@ -136,20 +145,28 @@ function node_access_link_node_access($node, $op, $account) {
   if($op == 'create')
     return NODE_ACCESS_IGNORE;
   
-  // Check key
-  if(isset($_GET['authkey']) && isset($node->field_node_access_link_authkey)) {
+  // Check key if:
+  if(isset($_GET['authkey']) && // authkey param is set
+     isset($node->field_node_access_link_authkey) && // authkey in node is set
+     !isset($_SESSION['node_access_link_auth_nodes'][$node->nid])) { // grants has not loaded yet
+    
     $authkeys = field_get_items('node', $node, 'field_node_access_link_authkey');
     if($authkeys[0]['value'] == $_GET['authkey']) {
       // Start session
       if(!isset($_SESSION))
         drupal_session_initialize();
+      
+      // Load settings
+      $instance = field_info_instance('node', 'field_node_access_link_authkey', $node->type);
+      
       // Save authorization to session
-      $_SESSION['node_access_link_auth_nodes'][$node->nid] = TRUE;
+      $_SESSION['node_access_link_auth_nodes'][$node->nid] = $instance['node_access_link_grants'];
     }
   }
   
   // Permit if checked
-  if(isset($_SESSION['node_access_link_auth_nodes'][$node->nid]))
+  if(isset($_SESSION['node_access_link_auth_nodes'][$node->nid]) &&
+     $_SESSION['node_access_link_auth_nodes'][$node->nid][$op])
     return NODE_ACCESS_ALLOW;
 }
 
