@@ -1,0 +1,16 @@
+<?php
+// $Id$
+
+/**
+ * Inplementation of hook_install.
+ */
+function node_authlink_install() {
+  drupal_set_message(t('To setup Node authorize link module go to Structure → Node types → edit → Node authorize link.'));
+}
+
+/**
+ * Inplementation of hook_uninstall.
+ */
+function node_authlink_uninstall() {
+  field_delete_field('field_node_authlink_authkey');
+}

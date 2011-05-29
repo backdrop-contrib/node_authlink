@@ -1,5 +1,6 @@
 name = Node authorize link
 description = Generates link for view, edit, or delete node without login.
 dependencies[] = computed_field
+version = 7.x-1.0
 core = 7.x
 files[] = node_authlink.module

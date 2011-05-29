@@ -2,17 +2,12 @@
 // $Id$
 
 /**
- * @file
- * TODO: Enter file description here.
- */
-
-/**
  * Alter of node_type_form.
  */
 function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
   $form['node_authlink'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Node Auth Key'),
+    '#title' => t('Node authorize link'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#group' => 'additional_settings',
@@ -104,7 +99,7 @@ function node_authlink_create_field_instance($node_type, $grants) {
   }
   
   $instance = array(
-    'label' => 'Node access link',
+    'label' => 'Node authorize key',
     'widget' => array(
       'type' => 'computed',
       'weight' => '1',
