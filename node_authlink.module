@@ -13,24 +13,17 @@ function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
     '#group' => 'additional_settings',
   );
   
-  $instance = field_info_instance('node', 'field_node_authlink_authkey', $form['#node_type']->type);
-  
   $form['node_authlink']['node_authlink_enable'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable'),
-    '#default_value' => (bool)$instance,
+    '#default_value' => variable_get('node_authlink_enable_' . $form['#node_type']->type, FALSE),
     '#description' => t('Disable of this feature will cost erase of authorization keys of all nodes in this node type.'),
   );
-  
-  if(is_array($instance) && isset($instance['node_authlink_grants']))
-    $default_grants = array_keys($instance['node_authlink_grants'], TRUE);
-  else
-    $default_grants = array();
   
   $form['node_authlink']['node_authlink_grants'] = array(
     '#type' => 'checkboxes', 
     '#title' => t('Grants to give'), 
-    '#default_value' => $default_grants,
+    '#default_value' => variable_get('node_authlink_grants_' . $form['#node_type']->type, array()),
     '#options' => array(
       'view' => t('View'),
       'update' => t('Update'), 
@@ -46,90 +39,66 @@ function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
  * Submit for node_type_form.
  */
 function node_authlink_form_node_type_form_alter_submit(&$form, &$form_state) {
-  $instance = field_info_instance('node', 'field_node_authlink_authkey', $form_state['values']['type']);
+  $node_types = variable_get('node_authlink_types', array());
   
-  // Instance does not exist and checkbox is enabled - create filed and instance
-  if(!$instance && $form_state['values']['node_authlink_enable']) {
-    node_authlink_create_field_instance($form_state['values']['type'], $form_state['values']['node_authlink_grants']);
+  // Enabled
+  if($form_state['values']['node_authlink_enable']) {
+    $node_types[$form_state['values']['type']] = $form_state['values']['type'];
   }
   
-  // Instance exists and checkbox is enabled - update instance
-  elseif($instance && $form_state['values']['node_authlink_enable']) {
-    $instance['node_authlink_grants'] = $form_state['values']['node_authlink_grants'];
-    field_update_instance($instance);
+  // Disabled
+  elseif(!$form_state['values']['node_authlink_enable']) {
+    variable_del('node_authlink_enable_' . $form_state['values']['type']);
+    variable_del('node_authlink_grants_' . $form_state['values']['type']);
+    unset($node_types[$form_state['values']['type']]);
   }
   
-  // Instance exists and checkbox is disabled - delete filed and instance
-  elseif($instance && !$form_state['values']['node_authlink_enable']) {
-    field_delete_instance($instance);
-  }
-  
-  
+  variable_set('node_authlink_types', $node_types);
 }
 
 /**
- * Create field instance in specified node type.
+ * Implementation of hook_node_load().
+ *
+ * Appends authke to loaded node object.
  */
-function node_authlink_create_field_instance($node_type, $grants) {
-  if(!field_info_field('field_node_authlink_authkey')) {
-    $field = array(
-      'translatable' => '1',
-      'settings' => array(
-        'code' => '',
-        'display_format' => '$display_output = $entity_field_item[\'value\'];',
-        'store' => 1,
-        'database' => array(
-          'data_type' => 'varchar',
-          'data_length' => '64',
-          'data_size' => 'normal',
-          'data_precision' => '10',
-          'data_scale' => '2',
-          'data_default' => '',
-          'data_not_NULL' => 1,
-          'data_index' => 0,
-        ),
-      ),
-      'field_name' => 'field_node_authlink_authkey',
-      'type' => 'computed',
-      'active' => '1',
-      'locked' => '0',
-      'cardinality' => '1',
-    );
-    field_create_field($field);
+function node_authlink_node_load($nodes, $types) {
+  foreach ($nodes as $nid => $node) {
+    // TODO: check node type (performance)
+    if($authkey = node_authlink_load_authkey($nid))
+      $nodes[$nid]->authkey = $authkey;
   }
+}
+
+/**
+ * Loads key from NID.
+ */
+function node_authlink_load_authkey($nid) {
+  $result = db_query('SELECT authkey FROM {node_authlink_nodes} WHERE nid = :nid', array(':nid' => $nid));
+  return $result->fetchField();
+}
+
+
+/**
+ * Get edit URL of specified node.
+ * @param $node Node object or NID.
+ * @param $op Operation to do with node. view, edit (default) or delete. 
+ */
+function node_authlink_get_url($node, $op = 'edit') {
+  if(is_numeric($node))
+    $node = node_load($node);
   
-  $instance = array(
-    'label' => 'Node authorize key',
-    'widget' => array(
-      'type' => 'computed',
-      'weight' => '1',
-      'settings' => array(),
-    ),
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'type' => 'hidden',
-        'weight' => '12',
-        'settings' => array(),
-      ),
-      'teaser' => array(
-        'type' => 'hidden',
-        'label' => 'above',
-        'settings' => array(),
-        'weight' => 0,
-      ),
-    ),
-    'required' => FALSE,
-    'description' => '',
-    'field_name' => 'field_node_authlink_authkey',
-    'entity_type' => 'node',
-    'bundle' => $node_type,
-    'node_authlink_grants' => $grants,
-  );
-  field_create_instance($instance);
+  if(!isset($node->authkey))
+    return FALSE;
+  
+  if($op == 'view')
+    $op = '';
+  else
+    $op = '/' . $op;
+  
+  return url("node/$node->nid$op", array(
+    'absolute' => TRUE,
+    'query' => array('authkey' => $node->authkey),
+  ));
 }
 
 /**
@@ -140,70 +109,51 @@ function node_authlink_node_access($node, $op, $account) {
   if($op == 'create')
     return NODE_ACCESS_IGNORE;
   
+  // Ignore if node type is not enabled
+  if(!variable_get('node_authlink_enable_' . $node->type, FALSE))
+    return NODE_ACCESS_IGNORE;
+  
   // Check key if:
   if(isset($_GET['authkey']) && // authkey param is set
-     isset($node->field_node_authlink_authkey) && // authkey in node is set
-     !isset($_SESSION['node_authlink_auth_nodes'][$node->nid])) { // grants has not loaded yet
+     isset($node->authkey)) { // authkey in node is set
     
-    $authkeys = field_get_items('node', $node, 'field_node_authlink_authkey');
-    if($authkeys[0]['value'] == $_GET['authkey']) {
+    if($node->authkey == $_GET['authkey']) {
       // Start session
       if(!isset($_SESSION))
         drupal_session_initialize();
       
-      // Load settings
-      $instance = field_info_instance('node', 'field_node_authlink_authkey', $node->type);
-      
-      // Save authorization to session
-      $_SESSION['node_authlink_auth_nodes'][$node->nid] = $instance['node_authlink_grants'];
+      // Save allowed grants to session
+      $_SESSION['node_authlink_nodes'][$node->nid] = variable_get('node_authlink_grants_' . $node->type, array());
     }
   }
   
   // Permit if checked
-  if(isset($_SESSION['node_authlink_auth_nodes'][$node->nid]) &&
-     $_SESSION['node_authlink_auth_nodes'][$node->nid][$op])
+  if(isset($_SESSION['node_authlink_nodes'][$node->nid]) &&
+     in_array($op, $_SESSION['node_authlink_nodes'][$node->nid]))
     return NODE_ACCESS_ALLOW;
 }
 
 /**
- * Computed field callback which generate auth key.
+ * Implementation of hook_node_insert().
+ *
+ * Generate auth key for the new node.
  */
-function computed_field_field_node_authlink_authkey_compute(&$entity_field, $entity_type, $entity, $field, $instance, $langcode, $items) {
-  
-  // Break if set yet and entity is not node
-  if(!empty($entity_field[0]['value']) || $entity_type != 'node')
+function node_authlink_node_insert($node) {
+  // Ignore if node type is disabled
+  if(!variable_get('node_authlink_enable_' . $node->type, FALSE))
     return;
   
-  // Find key in other languages
-  foreach($entity->field_node_authlink_authkey as $values) {
-    if(!empty($values[0]['value'])) {
-      $actual = $values[0]['value'];
-      break;
-    }
-  }
-  
   // Generate new key
-  if(!isset($actual))
-    $actual = hash('sha256', drupal_random_bytes(64));
+  $authkey = hash('sha256', drupal_random_bytes(64));
   
-  $entity_field[0]['value'] = $actual;
+  // Save to DB
+  db_insert('node_authlink_nodes')
+    ->fields(array(
+      'nid' => $node->nid, 
+      'authkey' => $authkey,
+      'created' => time(),
+    ))
+    ->execute();
 }
 
-/**
- * Get edit URL of specified node.
- * @param $node Node object or NID.
- */
-function node_authlink_get_url($node) {
-  if(is_numeric($node))
-    $node = node_load($node);
-    
-  $items = field_get_items('node', $node, 'field_node_authlink_authkey');
-  if(!$items)
-    return FALSE;
-  
-  return url("node/$node->nid/edit", array(
-    'absolute' => TRUE,
-    'query' => array('authkey' => $items[0]['value']),
-  ));
-}
 
