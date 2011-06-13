@@ -32,6 +32,24 @@ function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
     '#description' => t('What operations will be temporarily given to authorised user for the node. This not affect users who is authorised yet.'),
   );
   
+  $form['node_authlink']['node_authlink_batch'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#title' => t('Batch operations'),
+    '#description' => t('Affects all nodes in this node type.'),
+  );
+  $form['node_authlink']['node_authlink_batch']['generate'] = array(
+    '#type' => 'submit',
+    '#value' => t('Generate authkeys'),
+    '#submit' => array('node_authlink_batch_generate'),
+  );
+  $form['node_authlink']['node_authlink_batch']['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete all authkeys'),
+    '#submit' => array('node_authlink_batch_delete'),
+  );
+  
   $form['#submit'][] = 'node_authlink_form_node_type_form_alter_submit';
 }
 
@@ -55,6 +73,46 @@ function node_authlink_form_node_type_form_alter_submit(&$form, &$form_state) {
   
   variable_set('node_authlink_types', $node_types);
 }
+
+/**
+ * Generate authkeys for all nodes in node type.
+ */
+function node_authlink_batch_generate(&$form, &$form_state) {
+  // Load NIDs that are not in the authkeys table 
+  $query = db_select('node', 'n');
+  $query->leftJoin('node_authlink_nodes', 'a', 'n.nid = a.nid');
+  $query->fields('n', array('nid'))
+    ->condition('type', $form_state['values']['type'])
+    ->isNull('authkey');
+  $nids = $query->execute()->fetchCol();
+  
+  // Create keys
+  foreach ($nids as $nid)
+    node_authlink_node_insert($nid);
+  
+  drupal_set_message(t('%num authkeys has been generated.', array('%num' => count($nids))));
+}
+
+/**
+ * Delete authkeys for all nodes in node type.
+ */
+function node_authlink_batch_delete(&$form, &$form_state) {
+  // NIDs of nodes that are in this node type
+  $query = db_select('node', 'n');
+  $query->leftJoin('node_authlink_nodes', 'a', 'n.nid = a.nid');
+  $query->fields('n', array('nid'))
+    ->condition('type', $form_state['values']['type'])
+    ->isNotNull('authkey');
+  $nids = $query->execute()->fetchCol();
+  
+  // Delete keys
+  $count = db_delete('node_authlink_nodes')
+    ->condition('nid', $nids, 'IN')
+    ->execute();
+  
+  drupal_set_message(t('%num authkeys has been deleted.', array('%num' => $count)));
+}
+
 
 /**
  * Implementation of hook_node_load().
@@ -139,9 +197,16 @@ function node_authlink_node_access($node, $op, $account) {
  * Generate auth key for the new node.
  */
 function node_authlink_node_insert($node) {
-  // Ignore if node type is disabled
-  if(!variable_get('node_authlink_enable_' . $node->type, FALSE))
-    return;
+  // Allow key generate without load node object
+  if(is_numeric($node))
+    $nid = $node;
+  else {
+    $nid = $node->nid;
+    
+    // Ignore if node type is disabled
+    if(!variable_get('node_authlink_enable_' . $node->type, FALSE))
+      return;
+  }
   
   // Generate new key
   $authkey = hash('sha256', drupal_random_bytes(64));
@@ -149,7 +214,7 @@ function node_authlink_node_insert($node) {
   // Save to DB
   db_insert('node_authlink_nodes')
     ->fields(array(
-      'nid' => $node->nid, 
+      'nid' => $nid, 
       'authkey' => $authkey,
       'created' => time(),
     ))
