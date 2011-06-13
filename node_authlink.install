@@ -65,16 +65,21 @@ function node_authlink_update_7100(&$sandbox) {
   // Cleanup
   field_delete_field('field_node_authlink_authkey');
 }
+function node_authlink_update_7101(&$sandbox) {
+  variable_del('node_authlink_types');
+}
 
 /**
  * Inplementation of hook_uninstall().
  */
 function node_authlink_uninstall() {
-  $node_types = variable_get('node_authlink_types', array());
-  variable_del('node_authlink_types');
+  $node_types = node_type_get_types();
   
-  foreach ($node_types as $node_type)
-    variable_del('node_authlink_type_' . $node_type . '_grants');
+  foreach ($node_types as $node_type) {
+    variable_del('node_authlink_enable_' . $node_type->type);
+    variable_del('node_authlink_grants_' . $node_type->type);
+    variable_del('node_authlink_expire_' . $node_type->type);
+  }
 }
 
 
