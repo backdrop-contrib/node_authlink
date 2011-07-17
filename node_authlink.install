@@ -22,7 +22,7 @@ function node_authlink_schema() {
  * Inplementation of hook_install().
  */
 function node_authlink_install() {
-  drupal_set_message(t('To setup Node authorize link module go to Structure → Node types → edit → Node authorize link.'));
+  drupal_set_message(t('To setup Node authorize link module go to Structure → Content types → edit → Node authorize link.'));
 }
 
 /**
