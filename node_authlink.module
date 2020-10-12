@@ -201,9 +201,11 @@ function node_authlink_node_presave($node) {
   // Ignore if node type is disabled
   if(!variable_get('node_authlink_enable_' . $node->type, FALSE))
     return;
-  
+
   // Generate key
-  $node->authkey = hash('sha256', drupal_random_bytes(64));
+  if (!isset($node->authkey)) {
+    $node->authkey = hash('sha256', drupal_random_bytes(64));
+  }
 }
 
 /**
