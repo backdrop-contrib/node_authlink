@@ -319,4 +319,11 @@ function node_authlink_tokens($type, $tokens, array $data = array(), array $opti
   return $replacements;
 }
 
-
+/**
+ * Implements hook_views_api().
+ */
+function node_authlink_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
