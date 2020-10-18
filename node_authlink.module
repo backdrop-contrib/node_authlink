@@ -88,8 +88,12 @@ function node_authlink_batch_generate(&$form, &$form_state) {
   $nids = $query->execute()->fetchCol();
   
   // Create keys
-  foreach ($nids as $nid)
+  foreach ($nids as $nid) {
     node_authlink_node_insert($nid);
+    if (module_exists('entitycache')) {
+      cache_clear_all($nid, 'cache_entity_node');
+    }
+  }
   
   drupal_set_message(t('%num authkeys has been generated.', array('%num' => count($nids))));
 }
@@ -110,6 +114,12 @@ function node_authlink_batch_delete(&$form, &$form_state) {
   $count = db_delete('node_authlink_nodes')
     ->condition('nid', $nids, 'IN')
     ->execute();
+
+  foreach ($nids as $nid) {
+    if (module_exists('entitycache')) {
+      cache_clear_all($nid, 'cache_entity_node');
+    }
+  }
   
   drupal_set_message(t('%num authkeys has been deleted.', array('%num' => $count)));
 }
@@ -263,6 +273,9 @@ function node_authlink_cron() {
         ->condition('nid', $nid)
         ->execute();
       node_authlink_node_insert($nid);
+      if (module_exists('entitycache')) {
+        cache_clear_all($nid, 'cache_entity_node');
+      }
     }
   }
 }
