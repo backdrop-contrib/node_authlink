@@ -12,11 +12,11 @@
  */
 function node_authlink_views_data() {
 
-  // Table properties
+  // Table properties.
   $data['node_authlink_nodes']['table']['group'] = t('Node Auth link');
 
   $data['node_authlink_nodes']['table']['base'] = array(
-    'field' => 'nid', // This is the identifier field for the view.
+    'field' => 'nid',
     'title' => t('Node auth link nodes table'),
     'help' => t('Table for store authorization keys.'),
     'weight' => -10,
@@ -29,7 +29,7 @@ function node_authlink_views_data() {
     ),
   );
 
-  // Table fields
+  // Table fields.
   $data['node_authlink_nodes']['nid'] = array(
     'title' => t('Nid'),
     'help' => t('The node ID.'),
@@ -76,7 +76,7 @@ function node_authlink_views_data() {
     ),
   );
 
-  // Node integration
+  // Node integration.
   $data['node']['node_authlink_nodes'] = array(
     'title' => t('Nid'),
     'help' => t('The node ID.'),
