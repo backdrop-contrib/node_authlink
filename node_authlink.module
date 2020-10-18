@@ -310,25 +310,29 @@ function node_authlink_token_info() {
  * Implementation of hook_tokens().
  */
 function node_authlink_tokens($type, $tokens, array $data = array(), array $options = array()) {
-  if($type != 'node')
-    return;
-  
-  //dpm(func_get_args());
-  
   $replacements = array();
-  
-  if(isset($tokens['authlink:authkey']))
-    $replacements['[node:authlink:authkey]'] = $data['node']->authkey;
-    
-  if(isset($tokens['authlink:view-url']))
-    $replacements['[node:authlink:view-url]'] = node_authlink_get_url($data['node'], 'view');
-  
-  if(isset($tokens['authlink:edit-url']))
-    $replacements['[node:authlink:edit-url]'] = node_authlink_get_url($data['node'], 'edit');
-  
-  if(isset($tokens['authlink:delete-url']))
-    $replacements['[node:authlink:delete-url]'] = node_authlink_get_url($data['node'], 'delete');
-  
+
+  if ($type == 'node' && !empty($data['node']->authkey)) {
+    $node = $data['node'];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'authlink:authkey':
+          $replacements[$original] = $node->authkey;
+          break;
+        case 'authlink:view-url':
+          $replacements[$original] = node_authlink_get_url($node, 'view');
+          break;
+        case 'authlink:edit-url':
+          $replacements[$original] = node_authlink_get_url($node, 'edit');
+          break;
+        case 'authlink:delete-url':
+          $replacements[$original] = node_authlink_get_url($node, 'delete');
+          break;
+      }
+    }
+  }
+
   return $replacements;
 }
 
