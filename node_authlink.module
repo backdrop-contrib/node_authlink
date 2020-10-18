@@ -32,8 +32,8 @@ function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
     '#description' => t('What operations will be temporarily given to authorised user for the node. This not affect users who is authorised yet.'),
   );
   
-  // Time periods:                 none, 1 day, 1 week, 4 weeks
-  $period = drupal_map_assoc(array(0,    86400, 604800, 2419200), 'format_interval');
+  // Time periods: none, 1 day, 1 week, 4 weeks, 3 months, 6 months, 1 year
+  $period = drupal_map_assoc(array(0, 86400, 604800, 2419200, 7776000, 15552000, 31536000), 'format_interval');
   $period[0] = '<' . t('disabled') . '>';
   $form['node_authlink']['node_authlink_expire'] = array(
     '#type' => 'select', 
