@@ -1,3 +1,4 @@
 name = Node authorize link
 description = Generates link for view, edit, or delete node without login.
-core = 7.x
+backdrop = 1.x
+type = module
