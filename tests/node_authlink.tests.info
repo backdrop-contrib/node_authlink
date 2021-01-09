@@ -1,0 +1,5 @@
+[NodeAuthlinkTestCase]
+name = Node Authorization Link tests
+description = TODO
+group = Node Authorization Link
+file = node_authlink.test

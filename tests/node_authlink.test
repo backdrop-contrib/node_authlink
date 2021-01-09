@@ -1,0 +1,83 @@
+<?php
+
+/**
+ * @file
+ * Functional tests for the Node Authorization Link module.
+ */
+
+/**
+ * Test basic functionality.
+ */
+class NodeAuthlinkTestCase extends BackdropWebTestCase {
+  /**
+   * Profile name.
+   *
+   * @var string
+   */
+  protected $profile = 'testing';
+
+  /**
+   * Backdrop user object.
+   *
+   * @var object
+   */
+  protected $adminUser;
+
+  /**
+   * Set up environment.
+   */
+  public function setUp() {
+    parent::setUp(array('node_authlink'));
+
+    // Create content type for testing.
+    $this->backdropCreateContentType(array(
+      'type' => 'page',
+      'name' => 'Page',
+      'node_submitted' => TRUE,
+    ));
+
+    // All roles may view published content.
+    config_set('user.role.anonymous', 'permissions', array('access content'));
+    config_set('user.role.authenticated', 'permissions', array('access content'));
+
+    // Create and login admin user.
+    $this->adminUser = $this->backdropCreateUser(array(
+      'access content',
+      'administer nodes',
+      'administer content types',
+    ));
+    $this->backdropLogin($this->adminUser);
+  }
+
+  /**
+   * Test authorized node access.
+   */
+  public function testAuthorizedNodeAccess() {
+    // Create some nodes.
+    for ($i = 0; $i < 3; $i++) {
+      $node = $this->backdropCreateNode(array('status' => NODE_NOT_PUBLISHED));
+      $nids[] = $node->nid;
+    }
+    // Enable auth links for this content type.
+    $config = config('node_authlink.settings');
+    $config->set('page.enable', TRUE);
+    $config->set('page.grants', array('view' => 'view'));
+    $config->set('page.expire', 0);
+    $config->save();
+
+    // Batch create authkeys.
+    $this->backdropPost('admin/structure/types/manage/page', array(), 'Generate authkeys');
+    $this->assertRaw('<em class="placeholder">3</em> authkeys have been generated.');
+    $this->backdropLogout($this->adminUser);
+
+    // Anonymous user.
+    $this->backdropGet('node/' . $nids[0]);
+    $this->assertResponse(403, 'Unpublished node not accessible without key');
+
+    $key = node_authlink_load_authkey($nids[0]);
+    $this->backdropGet('node/' . $nids[0], array('query' => array('authkey' => $key)));
+    $this->assertResponse(200, 'Unpublished node is accessible with key');
+    // @todo Add more tests here.
+  }
+
+}
