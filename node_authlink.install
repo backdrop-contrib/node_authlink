@@ -45,25 +45,30 @@ function node_authlink_install() {
 /**
  * Migrate settings from variable to config.
  */
-/* @todo
 function node_authlink_update_1000() {
   $config = config('node_authlink.settings');
-  $node_types = node_type_get_types();
-  foreach ($node_types as $type) {
-    $name = $node_type->type;
-    $type_setting = array(
-      $name => array(
-        'enable' => update_variable_get('node_authlink_enable_' . $name);
-        'grants' => update_variable_get('node_authlink_grants_' . $name);
-        'expire' => update_variable_get('node_authlink_expire_' . $name);
-      ),
-    );
-    $config->set($type_setting);
 
-    update_variable_del('node_authlink_enable_' . $name);
-    update_variable_del('node_authlink_grants_' . $name);
-    update_variable_del('node_authlink_expire_' . $name);
+  foreach (node_type_get_names() as $type => $name) {
+    $type_setting = array(
+      'enable' => update_variable_get('node_authlink_enable_' . $type, FALSE),
+      'grants' => update_variable_get('node_authlink_grants_' . $type, array()),
+      'expire' => update_variable_get('node_authlink_expire_' . $type, 0),
+    );
+    $config->set($type, $type_setting);
+
+    update_variable_del('node_authlink_enable_' . $type);
+    update_variable_del('node_authlink_grants_' . $type);
+    update_variable_del('node_authlink_expire_' . $type);
   }
   $config->save();
 }
-*/
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function node_authlink_update_dependencies() {
+  $dependencies['node_authlink'][1000] = array(
+    'node' => 1006,
+  );
+  return $dependencies;
+}

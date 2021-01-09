@@ -11,6 +11,10 @@
 function node_authlink_form_node_type_form_alter(&$form, &$form_state) {
   $node_type = $form['#node_type']->type;
   $config = config_get('node_authlink.settings', $node_type);
+
+  if ($config == NULL) {
+    $config = array();
+  }
   // Defaults.
   $config += array(
     'enable' => FALSE,
