@@ -2,9 +2,9 @@
 
 Generates links to view, edit, or delete content without login.
 
-This module maintains authorization key for every node and gives additional
-grants (view/edit/delete) to every user (anonymous too) who accesses a page
-with correct key in URL.
+This module maintains authorization keys for every node and gives additional
+grants (view/edit/delete) to every user (anonymous too), who accesses a page
+with the correct key in the URL.
 
 The module provides function node_authlink_get_url() to generate absolute URLs
 to selected operations (e.g. for email notifications).
@@ -26,7 +26,7 @@ Bugs and feature requests should be reported in the [Issue Queue](https://github
 
 ## Current maintainers
 
-* Indigoxela (https://github.com/indigoxela)
+* [Indigoxela](https://github.com/indigoxela)
 
 ## Credits
 
