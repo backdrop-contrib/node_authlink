@@ -100,7 +100,7 @@ function node_authlink_form_node_type_form_alter_submit(&$form, &$form_state) {
     'grants' => array_filter($form_state['values']['node_authlink_grants']),
     'expire' => $form_state['values']['node_authlink_expire'],
   );
-  $config->setData(array($node_type => $settings));
+  $config->set($node_type, $settings);
   $config->save();
 }
 
