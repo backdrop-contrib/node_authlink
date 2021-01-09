@@ -39,7 +39,6 @@ function node_authlink_schema() {
  */
 function node_authlink_install() {
   backdrop_set_message(t('To setup Node authorize link module go to Structure → Content types → edit → Node authorize link.'));
-  // @todo Do we need to create anything on install? Like config or keys?
 }
 
 /**
