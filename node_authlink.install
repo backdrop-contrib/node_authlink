@@ -49,6 +49,9 @@ function node_authlink_update_1000() {
   $config = config('node_authlink.settings');
 
   foreach (node_type_get_names() as $type => $name) {
+    if (!$config->isNew()) {
+      continue;
+    }
     $type_setting = array(
       'enable' => update_variable_get('node_authlink_enable_' . $type, FALSE),
       'grants' => update_variable_get('node_authlink_grants_' . $type, array()),

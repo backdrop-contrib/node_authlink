@@ -124,7 +124,7 @@ function node_authlink_batch_generate(&$form, &$form_state) {
     }
   }
 
-  backdrop_set_message(t('%num authkeys has been generated.', array('%num' => count($nids))));
+  backdrop_set_message(t('%num authkeys have been generated.', array('%num' => count($nids))));
 }
 
 /**
@@ -150,7 +150,7 @@ function node_authlink_batch_delete(&$form, &$form_state) {
     }
   }
 
-  backdrop_set_message(t('%num authkeys has been deleted.', array('%num' => $count)));
+  backdrop_set_message(t('%num authkeys have been deleted.', array('%num' => $count)));
 }
 
 /**
