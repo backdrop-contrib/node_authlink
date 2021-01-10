@@ -58,6 +58,10 @@ class NodeAuthlinkTestCase extends BackdropWebTestCase {
       $node = $this->backdropCreateNode(array('status' => NODE_NOT_PUBLISHED));
       $nids[] = $node->nid;
     }
+    // Make sure, no authlink has been created for the still disabled type.
+    $node_nokey = node_load($nids[0]);
+    $this->assertFalse(isset($node_nokey->authkey), 'No key has been created for disabled type');
+
     // Enable auth links for this content type.
     $config = config('node_authlink.settings');
     $config->set('page.enable', TRUE);
@@ -65,19 +69,43 @@ class NodeAuthlinkTestCase extends BackdropWebTestCase {
     $config->set('page.expire', 0);
     $config->save();
 
+    // Create another node of that type, now enabled.
+    $node_key = $this->backdropCreateNode(array('status' => NODE_NOT_PUBLISHED));
+    $this->assertTrue(isset($node_key->authkey), 'A key has been created for enabled type');
+
+    // Batch delete authkeys.
+    $this->backdropPost('admin/structure/types/manage/page', array(), 'Delete all authkeys');
+    $this->assertRaw('<em class="placeholder">1</em> authkeys have been deleted.');
+
     // Batch create authkeys.
     $this->backdropPost('admin/structure/types/manage/page', array(), 'Generate authkeys');
-    $this->assertRaw('<em class="placeholder">3</em> authkeys have been generated.');
+    $this->assertRaw('<em class="placeholder">4</em> authkeys have been generated.');
     $this->backdropLogout($this->adminUser);
 
     // Anonymous user.
     $this->backdropGet('node/' . $nids[0]);
     $this->assertResponse(403, 'Unpublished node not accessible without key');
 
-    $key = node_authlink_load_authkey($nids[0]);
-    $this->backdropGet('node/' . $nids[0], array('query' => array('authkey' => $key)));
+    $key_1 = node_authlink_load_authkey($nids[0]);
+    $this->backdropGet('node/' . $nids[0], array('query' => array('authkey' => $key_1)));
     $this->assertResponse(200, 'Unpublished node is accessible with key');
-    // @todo Add more tests here.
+    $this->assertNoLink(t('Edit'), 'No edit link when type grant is only set to "view"');
+
+    // Change setting to also grant "update".
+    config_set('node_authlink.settings', 'page.grants', array(
+      'view' => 'view',
+      'update' => 'update',
+    ));
+    $key_2 = node_authlink_load_authkey($nids[1]);
+    $this->backdropGet('node/' . $nids[1], array('query' => array('authkey' => $key_2)));
+    $this->assertResponse(200, 'Unpublished node is accessible with key');
+    $this->assertLink(t('Edit'));
+
+    // Disable authkeys for that type.
+    config_set('node_authlink.settings', 'page.enable', FALSE);
+    $key_3 = node_authlink_load_authkey($nids[2]);
+    $this->backdropGet('node/' . $nids[2], array('query' => array('authkey' => $key_3)));
+    $this->assertResponse(403, 'Unpublished node not accessible with key when authkey is disabled');
   }
 
 }
