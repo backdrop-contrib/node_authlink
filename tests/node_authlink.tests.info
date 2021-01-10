@@ -1,5 +1,5 @@
 [NodeAuthlinkTestCase]
 name = Node Authorization Link tests
-description = TODO
+description = Test for basic functionality of the node_authlink module
 group = Node Authorization Link
 file = node_authlink.test
