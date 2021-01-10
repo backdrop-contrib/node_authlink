@@ -6,12 +6,15 @@ This module maintains authorization keys for every node and gives additional
 grants (view/edit/delete) to every user (anonymous too), who accesses a page
 with the correct key in the URL.
 
-The module provides function node_authlink_get_url() to generate absolute URLs
-to selected operations (e.g. for email notifications).
+The module also provides tokens, useful for instance for Rules actions like
+notification mails.
 
-Authkeys are generated for every node (in configured content types) once for all
-operations. In each content type form you can configure, which operations to
+Authkeys can get generated for every node (in configured content types) once for
+all operations. In each content type form you can configure, which operations to
 allow and automatic expiration of the keys.
+
+As soon as the authkeys are enabled, a key will automatically get created
+whenever a new node gets created.
 
 ## Installation
 
