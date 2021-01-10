@@ -13,8 +13,8 @@ Authkeys can get generated for every node (in configured content types) once for
 all operations. In each content type form you can configure, which operations to
 allow and automatic expiration of the keys.
 
-As soon as the authkeys are enabled, a key will automatically get created
-whenever a new node gets created.
+As soon as authkeys are enabled, a key will automatically get created, whenever
+a new node of that type gets created.
 
 ## Installation
 
