@@ -23,6 +23,32 @@ Install this module using the [official Backdrop CMS instructions](https://backd
 Configure the content types for you wish to use authorize links and create keys
 in a batch on the same form.
 
+To actually display the key, for example to copy-paste, use Views.
+
+Create a node based view on admin/structure/views/add, for example a block.
+Add a contextual filter (right column) for the node ID (Content: Nid),
+provide a default value: Content ID from URL. Specify validation criteria
+(like Basic validation or content type). "Action to take if filter value does not
+validate" should be "Hide view".
+
+For fields (left column in views UI) add Content: "Path" (hidden) and "Node Auth link:
+Authkey". The full URL gets assemled with some rewrite like
+`[path]?authkey=[authkey]`
+
+Set the access to that view as desired, for example set the role that should
+be able to see that info, or set it based on permissions.
+
+Save and head over to the Layout admin UI, for example
+admin/structure/layouts/manage/default.
+Add the newly created views block to the desired region and save.
+
+Both the view and the layout allow for more tweaks, of course. Above example
+should show the basics.
+
+The keys are also exposed to Rules. So if you're using that module, you have
+access to the key and link URL to display a message or send a mail, for
+example a link to view it: `[node:authlink:view-url]`.
+
 ## Issues
 
 Bugs and feature requests should be reported in the [Issue Queue](https://github.com/backdrop-contrib/node_authlink/issues).
