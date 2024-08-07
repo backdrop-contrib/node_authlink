@@ -2,3 +2,4 @@ name = Node authorize link
 description = Generates link for view, edit, or delete node without login.
 backdrop = 1.x
 type = module
+maintainers[indigoxela] = indigoxela
