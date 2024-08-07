@@ -18,10 +18,12 @@ a new node of that type gets created.
 
 ## Installation
 
-Install this module using the [official Backdrop CMS instructions](https://backdropcms.org/guide/modules).
+Install this module using the [official Backdrop CMS instructions](https://docs.backdropcms.org/documentation/extend-with-modules).
 
 Configure the content types for you wish to use authorize links and create keys
 in a batch on the same form.
+
+### Key and URL display
 
 To actually display the key, for example to copy-paste, use Views.
 
@@ -44,6 +46,8 @@ Add the newly created views block to the desired region and save.
 
 Both the view and the layout allow for more tweaks, of course. Above example
 should show the basics.
+
+### Rules support
 
 The keys are also exposed to Rules. So if you're using that module, you have
 access to the key and link URL to display a message or send a mail, for
