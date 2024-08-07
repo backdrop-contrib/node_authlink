@@ -25,7 +25,7 @@ in a batch on the same form.
 
 ### Key and URL display
 
-To actually display the key, for example to copy-paste, use Views.
+To actually display the key, for example to copy-paste it, use Views.
 
 Create a node based view on admin/structure/views/add, for example a block.
 Add a contextual filter (right column) for the node ID (Content: Nid),
@@ -33,8 +33,8 @@ provide a default value: Content ID from URL. Specify validation criteria
 (like Basic validation or content type). "Action to take if filter value does not
 validate" should be "Hide view".
 
-For fields (left column in views UI) add Content: "Path" (hidden) and "Node Auth link:
-Authkey". The full URL gets assemled with some rewrite like
+For fields (left column in views UI) add "Content: Path" (hidden) and "Node Auth link:
+Authkey". The full URL gets assembled with some rewrite like
 `[path]?authkey=[authkey]`
 
 Set the access to that view as desired, for example set the role that should
