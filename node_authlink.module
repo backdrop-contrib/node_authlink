@@ -294,6 +294,17 @@ function node_authlink_node_insert($node) {
 }
 
 /**
+ * Implements hook_node_delete().
+ */
+function node_authlink_node_delete(Node $node) {
+  if (isset($node->authkey)) {
+    db_delete('node_authlink_nodes')
+      ->condition('nid', $node->nid)
+      ->execute();
+  }
+}
+
+/**
  * Implements hook_cron().
  */
 function node_authlink_cron() {
