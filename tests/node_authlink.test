@@ -108,4 +108,29 @@ class NodeAuthlinkTestCase extends BackdropWebTestCase {
     $this->assertResponse(403, 'Unpublished node not accessible with key when authkey is disabled');
   }
 
+  /**
+   * Make sure auth keys get deleted when node is deleted.
+   */
+  protected function testKeyDeleteOnNodeDelete() {
+    // Enable auth links for content type page.
+    $config = config('node_authlink.settings');
+    $config->set('page.enable', TRUE);
+    $config->set('page.grants', array('view' => 'view'));
+    $config->set('page.expire', 0);
+    $config->save();
+
+    $node = $this->backdropCreateNode(array('status' => NODE_NOT_PUBLISHED));
+    // It's 403 but exists.
+    $this->backdropGet('node/' . $node->nid);
+    $this->assertResponse(403);
+
+    $key = node_authlink_load_authkey($node->nid);
+    $this->assertTrue(is_string($key) && strlen($key) > 60, 'Key got created on node create');
+    $node = node_load($node->nid);
+    $this->assertTrue(isset($node->authkey), 'Authkey is loaded with the node instance');
+    $node->delete();
+    $key = node_authlink_load_authkey($node->nid);
+    $this->assertFalse($key, 'Key no longer exists after deleting node instance');
+  }
+
 }

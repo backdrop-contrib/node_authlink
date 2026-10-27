@@ -66,6 +66,17 @@ function node_authlink_update_1000() {
 }
 
 /**
+ * Clean up leftover keys for inexistent nodes.
+ */
+function node_authlink_update_1001() {
+  $subquery = db_select('node', 'n')
+    ->fields('n', array('nid'));
+  db_delete('node_authlink_nodes')
+    ->condition('nid', $subquery, 'NOT IN')
+    ->execute();
+}
+
+/**
  * Implements hook_update_dependencies().
  */
 function node_authlink_update_dependencies() {
